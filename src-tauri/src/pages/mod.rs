@@ -1,0 +1,11 @@
+pub mod register;
+pub mod login;
+pub mod keygen;
+pub mod settings;
+pub mod chat;
+pub mod friends;
+pub mod wipe;
+pub mod update;
+pub mod sync;
+pub mod vault;
+pub mod recovery;

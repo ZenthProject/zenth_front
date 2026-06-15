@@ -1,0 +1,75 @@
+[package]
+name = "Zenth"
+version = "0.1.2"
+description = "Zenth"
+authors = ["Zenth Corporation"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "zenth_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-notification = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22.1"
+zenth_crypto = { git = "https://github.com/ZenthProject/zenth_crypto.git" }
+zenth_dto = { git = "https://github.com/ZenthProject/zenth_dto.git" }
+zenth_requests = { git = "https://github.com/ZenthProject/zenth_requests" }
+zenth_protect = { git = "https://github.com/ZenthProject/zenth_protect" }
+rand = "=0.9.2"
+rand08 = { package = "rand", version = "0.8" }
+rand_chacha = "0.9.0"
+sha3 = "0.10.8"
+getrandom = "0.3.3"
+sha2 = "0.10.9"
+argon2 = "0.5.3"
+zeroize = "1.8.1"
+rusqlite_migration = "2.2.0"
+rusqlite = { version = "0.37.0", features = ["bundled-sqlcipher-vendored-openssl"] }
+hex = "0.4.3"
+hkdf = "0.12.4"
+pqcrypto = "0.18.1"
+pqcrypto-kyber = "0.8.1"
+pqcrypto-traits = "0.3.5"
+reqwest = { version = "0.12.20", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["full"] }
+openssl = { version = "0.10.73", features = ["vendored"] }
+dotenvy = "0.15"
+tauri-plugin-websocket = "2"
+prost = "0.14.1"
+pqcrypto-dilithium = "0.5.0"
+winterfell = "0.4"
+bincode = "1.3"
+thiserror = "2.0.17"
+displaydoc = "0.2.5"
+x25519-dalek = "2.0"
+uuid = { version = "1.16", features = ["v4"] }
+once_cell = "1.19"
+chrono = "0.4"
+keyring = { version = "3", features = ["sync-secret-service"] }
+ed25519-dalek = { version = "2", features = ["digest"] }
+chacha20poly1305 = "0.10.1"
+
+# Signal Protocol (Double Ratchet + X3DH)
+
+# Custom WebSocket with TLS bypass support
+tokio-tungstenite = { version = "0.21", features = ["native-tls"] }
+native-tls = "0.2"
+futures-util = "0.3"
+url = "2"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { version = "0.21", default-features = false }
+ndk-context = "0.1"

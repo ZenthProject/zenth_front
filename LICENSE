@@ -1,0 +1,72 @@
+Zenth Source Available License
+Copyright (c) 2025 Zenth. All rights reserved.
+
+TERMS AND CONDITIONS
+
+1. DEFINITIONS
+
+"Software" means the Zenth source code, binaries, documentation, and all
+associated files in this repository.
+
+"Zenth" means the copyright holder and sole owner of the Software.
+
+"You" means any individual or legal entity accessing or using the Software.
+
+2. GRANT OF RIGHTS
+
+Subject to the terms of this License, Zenth grants You a limited,
+non-exclusive, non-transferable, non-sublicensable right to:
+
+  a) View and read the source code for personal, educational, or evaluation
+     purposes;
+
+  b) Fork or clone the repository solely for the purpose of submitting
+     contributions back to the official Zenth project.
+
+3. RESTRICTIONS
+
+You may NOT, without prior written permission from Zenth:
+
+  a) Use the Software or any portion of it in any product, service, or
+     project, whether commercial or non-commercial;
+
+  b) Distribute, publish, sublicense, sell, or transfer copies of the
+     Software or any derivative work;
+
+  c) Deploy the Software or any modified version thereof on any server,
+     device, or platform accessible to third parties;
+
+  d) Remove or alter any copyright, trademark, or proprietary notices
+     contained in the Software;
+
+  e) Use the name "Zenth", its logo, or any associated branding to endorse
+     or promote products derived from this Software.
+
+4. CONTRIBUTIONS
+
+By submitting a contribution (pull request, patch, or otherwise) to the
+Zenth project, You agree to assign all intellectual property rights in
+that contribution to Zenth. Zenth may incorporate, modify, or redistribute
+Your contributions under any terms it chooses.
+
+5. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ZENTH BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM
+THE USE OF OR INABILITY TO USE THE SOFTWARE.
+
+6. TERMINATION
+
+Any breach of these terms immediately terminates Your rights under this
+License. Upon termination, You must destroy all copies of the Software in
+Your possession.
+
+7. GOVERNING LAW
+
+This License shall be governed by and construed in accordance with
+applicable law. Any disputes shall be resolved exclusively in the courts
+of competent jurisdiction chosen by Zenth.
+
+For permissions beyond the scope of this License, contact: legal@zenth.app

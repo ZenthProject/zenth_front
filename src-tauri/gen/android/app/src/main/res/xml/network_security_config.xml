@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Aucun trafic HTTP en clair autorisé -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Uniquement les CAs système - pas de CAs utilisateur (évite les MITM via proxy) -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

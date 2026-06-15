@@ -1,0 +1,68 @@
+SIGNATURE DES RELEASES - CLÉ USB CHIFFRÉE
+==========================================
+
+Prérequis : openssl, cryptsetup (sudo apt install cryptsetup)
+
+
+1. MONTER LA CLÉ USB CHIFFRÉE (LUKS)
+--------------------------------------
+
+  # Identifier le device de la clé USB
+  lsblk
+
+  # Déverrouiller le volume chiffré (remplace sdX1 par le bon device)
+  sudo cryptsetup open /dev/sdX1 usbkey
+
+  # Monter le volume déverrouillé
+  sudo mkdir -p /mnt/usbkey
+  sudo mount /dev/mapper/usbkey /mnt/usbkey
+
+  # Vérifier que la clé privée est là
+  ls /mnt/usbkey/
+
+
+2. SIGNER LES RELEASES
+-----------------------
+
+  # Depuis la racine du projet
+  cd ~/zenth_front
+
+  bash scripts/sign_release.sh 0.1.0 /mnt/usbkey/ed25519_private.pem releases/
+
+  # Le script génère :
+  #   releases/Zenth_0.1.0_*.sig   - un .sig par binaire
+  #   releases/manifest.json       - sha256 + signature base64 par plateforme
+
+
+3. VÉRIFIER UNE SIGNATURE (optionnel)
+---------------------------------------
+
+  openssl pkeyutl -verify -pubin -inkey releases/zenth_pub.pem -rawin \
+    -sigfile releases/Zenth_0.1.0_linux_amd64.deb.sig \
+    -in releases/Zenth_0.1.0_linux_amd64.deb
+  # → Signature Verified Successfully
+
+  openssl pkeyutl -verify -pubin -inkey releases/zenth_pub.pem -rawin \
+    -sigfile releases/Zenth_0.1.0_linux.AppImage.sig \
+    -in releases/Zenth_0.1.0_linux.AppImage
+
+  openssl pkeyutl -verify -pubin -inkey releases/zenth_pub.pem -rawin \
+    -sigfile releases/Zenth_0.1.0_android.apk.sig \
+    -in releases/Zenth_0.1.0_android.apk
+
+
+4. DÉMONTER LA CLÉ USB (obligatoire avant de retirer)
+-------------------------------------------------------
+
+  sudo umount /mnt/usbkey
+  sudo cryptsetup close usbkey
+
+
+NOTES
+------
+- La clé privée ne touche jamais le disque de la machine.
+- Les fichiers .sig peuvent être publiés à côté des binaires.
+- Pour une nouvelle version, changer "0.1.0" dans l'étape 2.
+- Pour régénérer la paire de clés : bash scripts/gen_update_key.sh keys/
+  (puis mettre à jour UPDATE_PUBKEY dans src-tauri/src/pages/update/mod.rs
+   et la clé publique affichée sur le site)

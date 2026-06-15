@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Zenth",
+  "version": "0.1.2",
+  "identifier": "com.zenth-project.app",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Zenth Messaging",
+        "width": 1100,
+        "height": 700,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src ipc: http://ipc.localhost 'self' wss: https:; font-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "shortDescription": "End-to-end encrypted messaging application",
+    "longDescription": "Zenth is a secure messaging application developed by Zenth Corporation. It provides end-to-end encryption using post-quantum cryptography (Kyber, Dilithium), Double Ratchet and X3DH key exchange protocols, ensuring that your messages, files, and communications remain private and protected against both classical and quantum threats.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/256x256.png",
+      "icons/512x512.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
+
+

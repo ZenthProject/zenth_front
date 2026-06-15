@@ -1,0 +1,10 @@
+# Ignore database files to prevent rebuild loops
+*.db
+*.db-shm
+*.db-wal
+
+# Ignore data directory
+data/
+
+# Ignore build artifacts
+target/
