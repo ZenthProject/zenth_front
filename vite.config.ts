@@ -43,16 +43,16 @@ export default defineConfig(async () => ({
     modulePreload: false,
     rollupOptions: {
       output: {
+        // Seuls les chunks sans dépendance d'init sur React sont isolés ici.
+        // Séparer react/react-dom/radix/i18n/etc. dans des chunks distincts
+        // a causé un crash "React.Children undefined" : avec modulePreload
+        // désactivé (cf. plus haut), rien ne garantit que vendor-react
+        // s'exécute avant les chunks qui en dépendent au chargement du module.
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return undefined;
           if (id.includes('emoji-picker-react'))                   return 'vendor-emoji';
           if (id.includes('qr-code-styling') || id.includes('qrcode')) return 'vendor-qr';
-          if (id.includes('lucide-react'))                         return 'vendor-icons';
-          if (id.includes('@radix-ui'))                            return 'vendor-radix';
-          if (id.includes('i18next'))                              return 'vendor-i18n';
-          if (id.includes('@tauri-apps'))                          return 'vendor-tauri';
-          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/')) return 'vendor-react';
-          return 'vendor';
+          return undefined;
         },
       },
     },
