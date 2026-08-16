@@ -56,43 +56,46 @@ impl NetworkKey {
 /// Generates a cryptographically secure 20000-character network key
 /// using the operating system's CSPRNG (Cryptographically Secure Pseudo-Random Number Generator)
 pub fn generate_network_key() -> Result<NetworkKey, String> {
+    generate_network_key_with_entropy(&[])
+}
+
+/// Like `generate_network_key` but XORs each OS-random word with the cycled
+/// user-supplied entropy bytes.  Adding user entropy can only increase
+/// unpredictability — even if `user_entropy` is all-zeros the result is
+/// identical to the plain OsRng variant.
+pub fn generate_network_key_with_entropy(user_entropy: &[u8]) -> Result<NetworkKey, String> {
     let mut rng = OsRng;
     let mut key_chars = Vec::with_capacity(NETWORK_KEY_LENGTH);
 
-    // Generate random indices and map to charset
-    for _ in 0..NETWORK_KEY_LENGTH {
-        let idx = (rng.next_u32() as usize) % CHARSET.len();
-        key_chars.push(CHARSET[idx] as char);
+    for i in 0..NETWORK_KEY_LENGTH {
+        let os_rand = rng.next_u32();
+        let mixed = if !user_entropy.is_empty() {
+            // Cycle through the entropy bytes; XOR with OS randomness
+            os_rand ^ (user_entropy[i % user_entropy.len()] as u32)
+        } else {
+            os_rand
+        };
+        key_chars.push(CHARSET[(mixed as usize) % CHARSET.len()] as char);
     }
 
     let full_key: String = key_chars.into_iter().collect();
-
-    // Split into portions
-    let zkp_portion = full_key[..ZKP_PORTION_LENGTH].to_string();
+    let zkp_portion  = full_key[..ZKP_PORTION_LENGTH].to_string();
     let auth_portion = full_key[ZKP_PORTION_LENGTH..].to_string();
 
-    // Validate lengths
     if zkp_portion.len() != ZKP_PORTION_LENGTH {
         return Err(format!(
             "Invalid ZKP portion length: expected {}, got {}",
-            ZKP_PORTION_LENGTH,
-            zkp_portion.len()
+            ZKP_PORTION_LENGTH, zkp_portion.len()
         ));
     }
-
     if auth_portion.len() != AUTH_PORTION_LENGTH {
         return Err(format!(
             "Invalid auth portion length: expected {}, got {}",
-            AUTH_PORTION_LENGTH,
-            auth_portion.len()
+            AUTH_PORTION_LENGTH, auth_portion.len()
         ));
     }
 
-    Ok(NetworkKey {
-        full_key,
-        zkp_portion,
-        auth_portion,
-    })
+    Ok(NetworkKey { full_key, zkp_portion, auth_portion })
 }
 
 /// Validates that a network key has the expected format and entropy

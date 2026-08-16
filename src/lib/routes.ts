@@ -15,6 +15,10 @@ export const router = createHashRouter([
     path: "/keygen",
     Component: React.lazy(() => import("@/components/pages/KeyGen")),
   },
+  {
+    path: "/sync",
+    Component: React.lazy(() => import("@/components/pages/Sync")),
+  },
   // Protected routes (with sidebar layout)
   {
     path: "/",

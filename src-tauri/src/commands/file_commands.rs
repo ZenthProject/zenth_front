@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::utils::sanitizer::parser::{FileParser, FileInfo};
+use zenth_utils::{FileParser, FileInfo};
 
 // Structures pour la communication avec le frontend
 #[derive(Debug, Serialize, Deserialize)]

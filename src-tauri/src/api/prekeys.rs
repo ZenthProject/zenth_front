@@ -23,7 +23,7 @@ use prost::Message;
 use std::time::Duration;
 use crate::api::errors::{ApiError, ApiResult, check_http_status};
 use crate::api::register::DarknetType;
-use crate::utils::timestamp::plateform::current_timestamp;
+use zenth_utils::current_timestamp;
 
 /// Configuration for the pre-key API client
 #[derive(Debug, Clone)]

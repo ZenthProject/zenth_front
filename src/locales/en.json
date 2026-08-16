@@ -33,7 +33,9 @@
     "validation": {
       "username_required": "Username required",
       "password_required": "Password required"
-    }
+    },
+    "sync_prompt": "Account on another device?",
+    "sync_link": "Sync"
   },
   "keygen": {
     "title": "Key Generation",
@@ -456,5 +458,40 @@
     "back": "Back",
     "yes": "Yes",
     "no": "No"
+  },
+  "sync": {
+    "title": "Sync",
+    "subtitle": "Sync this device with an existing account.",
+    "role_new": "New device",
+    "role_new_sub": "I want to receive the sync key from a trusted device.",
+    "role_trusted": "Trusted device",
+    "role_trusted_sub": "I am already logged in and want to certify a new device.",
+    "back": "Back",
+    "back_to_login": "Back to login",
+    "generate_btn": "Generate pairing keys",
+    "generating": "Generating…",
+    "done": "Done",
+    "retry": "Start over",
+    "need_login": "You must be logged in to use this feature.",
+    "keygen_title": "Generating pairing keys",
+    "keygen_hint_mouse": "Move your mouse to generate entropy",
+    "keygen_hint_touch": "Hold your device — sensors are collecting entropy",
+    "keygen_preview_label": "Key being generated",
+    "step_role": "Role",
+    "step_password": "Confirm",
+    "step_keygen": "Key generation",
+    "step_qr": "QR code",
+    "step_scan": "Scan",
+    "step_verify": "Verification",
+    "step_done": "Done",
+    "need_account_hint": "To link this device, you must first create an account or log in. Once logged in, come back here to continue.",
+    "create_account_btn": "Create an account",
+    "login_btn": "Log in",
+    "show_qr_hint": "Show this code to your trusted device.",
+    "success_title": "Device synchronized!",
+    "success_detail": "Your account has been synced to this device.",
+    "goto_chat": "Continue",
+    "error_network": "Server unreachable. Check your connection and try again.",
+    "keygen_server_wait": "Setting up pairing keys…"
   }
 }

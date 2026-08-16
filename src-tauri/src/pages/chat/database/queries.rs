@@ -2,13 +2,13 @@
 //!
 //! Handles session persistence with encryption using the functions from encryption.rs
 
-use crate::db::user::UserDb;
-use crate::db::error::DbError;
+use zenth_database_local::db::user::UserDb;
+use zenth_database_local::db::error::DbError;
 use crate::pages::chat::database::encryption::{
     encrypt_session, decrypt_session,
 };
 
-use crate::utils::timestamp::plateform::current_timestamp;
+use zenth_utils::current_timestamp;
 
 /// Double Ratchet session state stored in database
 #[derive(Debug, Clone)]

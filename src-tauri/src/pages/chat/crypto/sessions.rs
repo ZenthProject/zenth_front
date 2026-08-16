@@ -23,8 +23,8 @@ use pqcrypto_traits::sign::{
     PublicKey as DilithiumPublicKeyTrait,
     DetachedSignature as DetachedSignatureTrait,
 };
-use crate::db::user::UserDb;
-use crate::db::error::DbError;
+use zenth_database_local::db::user::UserDb;
+use zenth_database_local::db::error::DbError;
 use crate::pages::chat::database::queries::{
     self, Session as DbSession, NewSession, load_session, save_session, session_exists,
 };

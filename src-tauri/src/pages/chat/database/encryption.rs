@@ -3,7 +3,7 @@
 //! Uses AES-256-GCM via the existing cipher_key functions.
 //! Format: [nonce: 12 bytes][ciphertext][tag: 16 bytes]
 
-use crate::utils::security::cipher_key::{encrypt_key_with_password, decrypt_key_with_password};
+use zenth_utils::{encrypt_key_with_password, decrypt_key_with_password};
 use zenth_crypto::errors::error::{Error, Result};
 
 /// Encrypt message content before storage

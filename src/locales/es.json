@@ -33,7 +33,9 @@
     "validation": {
       "username_required": "Identificador requerido",
       "password_required": "Contraseña requerida"
-    }
+    },
+    "sync_prompt": "¿Cuenta en otro dispositivo?",
+    "sync_link": "Sincronizar"
   },
   "keygen": {
     "title": "Generación de clave",
@@ -424,5 +426,40 @@
     "back": "Atrás",
     "yes": "Sí",
     "no": "No"
+  },
+  "sync": {
+    "title": "Sincronización",
+    "subtitle": "Sincroniza este dispositivo con una cuenta existente.",
+    "role_new": "Nuevo dispositivo",
+    "role_new_sub": "Quiero recibir la clave de sincronización desde un dispositivo de confianza.",
+    "role_trusted": "Dispositivo de confianza",
+    "role_trusted_sub": "Ya he iniciado sesión y quiero certificar un nuevo dispositivo.",
+    "back": "Volver",
+    "back_to_login": "Volver al inicio de sesión",
+    "generate_btn": "Generar claves de emparejamiento",
+    "generating": "Generando…",
+    "done": "Listo",
+    "retry": "Reiniciar",
+    "need_login": "Debes iniciar sesión para usar esta función.",
+    "keygen_title": "Generando claves de emparejamiento",
+    "keygen_hint_mouse": "Mueve el ratón para generar entropía",
+    "keygen_hint_touch": "Sujeta el dispositivo — los sensores recopilan entropía",
+    "keygen_preview_label": "Clave en generación",
+    "step_role": "Rol",
+    "step_password": "Confirmación",
+    "step_keygen": "Generación de claves",
+    "step_qr": "Código QR",
+    "step_scan": "Escanear",
+    "step_verify": "Verificación",
+    "step_done": "Listo",
+    "need_account_hint": "Para vincular este dispositivo, primero debes crear una cuenta o iniciar sesión.",
+    "create_account_btn": "Crear cuenta",
+    "login_btn": "Iniciar sesión",
+    "show_qr_hint": "Muestra este código a tu dispositivo de confianza.",
+    "success_title": "¡Dispositivo sincronizado!",
+    "success_detail": "Tu cuenta ha sido sincronizada en este dispositivo.",
+    "goto_chat": "Continuar",
+    "error_network": "Servidor inaccesible. Comprueba tu conexión e inténtalo de nuevo.",
+    "keygen_server_wait": "Configurando las claves de emparejamiento…"
   }
 }

@@ -5,13 +5,13 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
-use crate::pages::register::crypto::key::{generate_username_hash, derive_keys_from_password_with_salt};
-use crate::db::{UserDb, MasterDb};
-use crate::db::error::DbError;
-use crate::utils::security::cipher_key::decrypt_key_with_password;
+use crate::pages::register::crypto::key::{generate_public_key_hash, derive_keys_from_password_with_salt};
+use zenth_database_local::db::{UserDb, MasterDb};
+use zenth_database_local::db::error::DbError;
 use crate::api::login::LoginApiClient;
 use crate::api::register::{RegisterConfig, DarknetType};
-use crate::utils::timestamp::plateform::current_timestamp;
+use pqcrypto_dilithium::dilithium2::PublicKey as DilithiumPublicKey;
+use pqcrypto_traits::sign::PublicKey as PublicKeyTrait;
 
 // Compteur d'échecs de connexion - en mémoire Rust, jamais exposé au frontend
 static FAIL_COUNTER: Lazy<Mutex<HashMap<String, u32>>> =
@@ -56,14 +56,21 @@ fn reset_fail_counter(username: &str) {
 
 #[tauri::command]
 pub async fn login(username: String, password: String) -> Result<String, String> {
-
-    // Phase 1 (blocking thread): DB open + Argon2 + crypto - libère le runtime async
-    let (username_hash, user_db, dilithium_secret_bytes) = match tokio::task::spawn_blocking({
+    let (hash_identity, user_db, dilithium_secret_bytes) = match tokio::task::spawn_blocking({
         let username = username.clone();
         let password = password.clone();
         move || -> Result<(Vec<u8>, UserDb, Vec<u8>), String> {
-            let username_hash = generate_username_hash(&username)?;
 
+
+
+            /*
+            
+                OPEN DATABASE
+                Params:
+                    - username 
+                    - password
+
+             */
             let user_db = UserDb::open(&username, &password)
                 .map_err(|e| match e {
                     DbError::UserNotFound(_) => "Invalid username or password".to_string(),
@@ -71,35 +78,64 @@ pub async fn login(username: String, password: String) -> Result<String, String>
                     _ => "Failed to open user database".to_string(),
                 })?;
 
+
+
+
+
+
             let user_info = user_db.get_user_info()
                 .map_err(|e| format!("Failed to get user info: {}", e))?;
 
+
+            let dilithium_public = DilithiumPublicKey::from_bytes(&user_info.identity_key_public)
+                .map_err(|_| "Invalid Dilithium public key".to_string())?;
+            let hash_identity = generate_public_key_hash(&dilithium_public)?;
+            let hash_identity_bytes = hex::decode(&hash_identity)
+                .map_err(|e| format!("Invalid hash_identity encoding: {}", e))?;
+            println!("[LOGIN] hash_identity (hex, {} chars): {}", hash_identity.len(), hash_identity);
+            println!("[LOGIN] hash_identity_bytes (raw, {} octets): {:?}", hash_identity_bytes.len(), hash_identity_bytes);
             let master_db = MasterDb::open()
+
+
+
                 .map_err(|e| format!("Failed to open master database: {}", e))?;
             let user_entry = master_db.get_user(&username)
                 .map_err(|e| format!("User not found in master database: {}", e))?;
 
-            // Argon2id (1-2 sec) - sur le thread pool, pas sur le runtime async
+
+
+
+
+
+
             let hash_password = derive_keys_from_password_with_salt(&password, &user_entry.salt)?;
 
-            let decrypted_keys_json = decrypt_key_with_password(
+
+
+
+            let decrypted_keys_json = zenth_utils::decrypt_key_with_password(
                 &user_info.encrypted_identity_keys,
                 &hash_password,
                 username.as_bytes(),
             ).map_err(|e| format!("Failed to decrypt keys: {:?}", e))?;
 
+
+
+
             let keys: serde_json::Value = serde_json::from_slice(&decrypted_keys_json)
                 .map_err(|e| format!("Failed to parse decrypted keys: {}", e))?;
-
             let dilithium_secret_hex = keys["dilithium_secret"]
                 .as_str()
                 .ok_or("Missing dilithium_secret in stored keys")?;
-
             let dilithium_secret_bytes = hex::decode(dilithium_secret_hex)
                 .map_err(|e| format!("Failed to decode dilithium secret: {}", e))?;
 
-            Ok((username_hash, user_db, dilithium_secret_bytes))
+            Ok((hash_identity.as_bytes().to_vec(), user_db, dilithium_secret_bytes))
         }
+
+
+
+
     })
     .await
     .map_err(|e| format!("Thread pool error: {}", e))?
@@ -112,9 +148,11 @@ pub async fn login(username: String, password: String) -> Result<String, String>
         }
     };
 
-    // Phase 2+3 (async): server auth + Dilithium signature.
-    // Wrapped so that paired devices (whose DHT account was deleted by fetch_sync_key)
-    // can fall back to local-only login when server auth fails.
+
+
+
+
+
     let server_auth: Result<_, String> = async move {
         let config = RegisterConfig {
             base_url: crate::config::dht_api_url(),
@@ -128,29 +166,29 @@ pub async fn login(username: String, password: String) -> Result<String, String>
             .await
             .map_err(|e| format!("Failed to create API client: {}", e))?;
 
-        let challenge = client.request_challenge(username_hash.clone())
+        let challenge = client.request_challenge(hash_identity.clone())
             .await
             .map_err(|e| format!("Failed to get challenge: {}", e))?;
 
-        let timestamp = current_timestamp();
+        let timestamp = zenth_utils::current_timestamp();
 
         let mut message_to_sign = Vec::new();
         message_to_sign.extend_from_slice(&challenge.nonce);
-        message_to_sign.extend_from_slice(&username_hash);
+        message_to_sign.extend_from_slice(&hash_identity);
         message_to_sign.extend_from_slice(&timestamp.to_le_bytes());
 
         let signature = sign_with_dilithium(&dilithium_secret_bytes, &message_to_sign)?;
 
         let proof = AuthProof {
             challenge_id: challenge.challenge_id,
-            user_hash_id: username_hash.clone(),
+            user_hash_id: hash_identity.clone(),
             proof_type: challenge.required_proof_type,
             proof: signature,
             public_inputs: vec![],
             timestamp,
         };
 
-        let login_response = client.submit_proof(username_hash, proof)
+        let login_response = client.submit_proof(hash_identity, proof)
             .await
             .map_err(|e| format!("Login failed: {}", e))?;
 
@@ -245,7 +283,7 @@ pub async fn get_ws_auth(session_token: String) -> Result<WsAuthData, String> {
 
     if let Ok(Some(expiry_str)) = session.get_setting("session_expiry") {
         if let Ok(expiry) = expiry_str.parse::<u64>() {
-            let now = current_timestamp();
+            let now = zenth_utils::current_timestamp();
             if now > expiry {
                 return Err("Session expired. Please login again.".to_string());
             }

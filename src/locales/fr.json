@@ -33,7 +33,9 @@
     "validation": {
       "username_required": "Identifiant requis",
       "password_required": "Mot de passe requis"
-    }
+    },
+    "sync_prompt": "Compte sur un autre appareil ?",
+    "sync_link": "Synchroniser"
   },
   "keygen": {
     "title": "Génération de clé",
@@ -44,7 +46,7 @@
     "validating": "Validation en cours...",
     "hint_touch": "Tenez votre téléphone — les capteurs collectent l'entropie automatiquement",
     "hint_mouse": "Déplacez la souris pour générer de l'entropie",
-    "entropy_complete": "Clé générée — prête à valider",
+    "entropy_complete": "Clé générée - prête à valider",
     "entropy_progress": "Génération... {{percent}}%",
     "key_preview": "Votre clé (aperçu)"
   },
@@ -459,5 +461,40 @@
     "back": "Retour",
     "yes": "Oui",
     "no": "Non"
+  },
+  "sync": {
+    "title": "Synchronisation",
+    "subtitle": "Synchronisez cet appareil avec un compte existant.",
+    "role_new": "Nouvel appareil",
+    "role_new_sub": "Je veux recevoir la clé de sync depuis un appareil de confiance.",
+    "role_trusted": "Appareil de confiance",
+    "role_trusted_sub": "Je suis déjà connecté et je veux certifier un nouvel appareil.",
+    "back": "Retour",
+    "back_to_login": "Retourner à la connexion",
+    "generate_btn": "Générer les clés de liaison",
+    "generating": "Génération en cours…",
+    "done": "Terminer",
+    "retry": "Recommencer",
+    "need_login": "Vous devez être connecté pour utiliser cette fonctionnalité.",
+    "keygen_title": "Génération des clés de liaison",
+    "keygen_hint_mouse": "Déplacez la souris pour générer de l'entropie",
+    "keygen_hint_touch": "Tenez votre appareil — les capteurs collectent l'entropie",
+    "keygen_preview_label": "Clé en cours de génération",
+    "step_role": "Choix du rôle",
+    "step_password": "Confirmation",
+    "step_keygen": "Génération des clés",
+    "step_qr": "Code QR",
+    "step_scan": "Scan",
+    "step_verify": "Vérification",
+    "step_done": "Terminé",
+    "need_account_hint": "Pour lier cet appareil, vous devez d'abord créer un compte ou vous connecter. Une fois connecté, revenez ici pour continuer.",
+    "create_account_btn": "Créer un compte",
+    "login_btn": "Se connecter",
+    "show_qr_hint": "Montrez ce code à votre appareil de confiance.",
+    "success_title": "Appareil synchronisé !",
+    "success_detail": "Votre compte a été synchronisé sur cet appareil.",
+    "goto_chat": "Continuer",
+    "error_network": "Serveur inaccessible. Vérifiez votre connexion et réessayez.",
+    "keygen_server_wait": "Configuration des clés de jumelage…"
   }
 }

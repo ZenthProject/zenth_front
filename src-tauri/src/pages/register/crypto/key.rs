@@ -10,19 +10,26 @@ use zenth_crypto::{
         KeyType
     }
 };
+
 use rand08::rngs::OsRng as OsRng08;
 use rand08::RngCore;
 use argon2::password_hash::SaltString;
 use pqcrypto_traits::sign::{PublicKey as PublicKeyTrait, SecretKey as SecretKeyTrait};
 use pqcrypto_dilithium::dilithium2::{PublicKey, SecretKey};
 use x25519_dalek::{StaticSecret, PublicKey as X25519PublicKey};
+use pqcrypto_dilithium::dilithium2::PublicKey as PublicKeyDili;
 
 
-pub fn generate_username_hash(username: &str) -> Result<Vec<u8>, String> {
+pub fn generate_public_key_hash(public_key_identitiy: &PublicKey) -> Result<String, String> {
     let mut hash = CryptographicHash::new("SHA256", 2)
         .map_err(|e| format!("Hash initialization error: {}", e))?;
-    hash.update(username.as_bytes());
-    Ok(hash.finalize())
+    hash.update(public_key_identitiy.as_bytes());
+    let hash_bytes: Vec<u8>  = hash.finalize();
+    let hash_string: String = hash_bytes
+        .iter()
+        .map(|byte| format!("{:02x}", byte))
+        .collect();
+    Ok(hash_string)
 }
 
 pub fn derive_keys_from_password(password: &str) -> Result<(Vec<u8>, Vec<u8>), String> {

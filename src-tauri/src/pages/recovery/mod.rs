@@ -316,7 +316,7 @@ pub async fn export_backup(
 
     let payload = ZbcPayload {
         version: ZBC_VERSION,
-        created_at: crate::utils::timestamp::plateform::current_timestamp() as i64,
+        created_at: zenth_utils::current_timestamp() as i64,
         username_hash: session.user_hash_hex.clone(),
         recovery_dilithium_pubkey: pubkey_hex,
         recovery_dilithium_privkey: privkey_hex,
@@ -366,7 +366,7 @@ pub async fn import_backup(
             s.as_ref().and_then(|b| b64.decode(b).ok())
         };
 
-        let now = crate::utils::timestamp::plateform::current_timestamp() as i64;
+        let now = zenth_utils::current_timestamp() as i64;
 
         if !already {
             let _ = user_db.conn().execute(
@@ -554,7 +554,7 @@ pub async fn publish_recovery_key_dht(session_token: String) -> Result<(), Strin
         .map_err(|_| "recovery_dilithium_pubkey corrompu")?;
 
     // Signed message : username_hash || recovery_pubkey || timestamp (8 bytes LE)
-    let ts = crate::utils::timestamp::plateform::current_timestamp();
+    let ts = zenth_utils::current_timestamp();
     let mut signed_data = Vec::with_capacity(32 + recovery_pubkey.len() + 8);
     signed_data.extend_from_slice(&session.user_hash);
     signed_data.extend_from_slice(&recovery_pubkey);
@@ -623,7 +623,7 @@ pub async fn submit_recovery_claim(
         .map_err(|_| "new_identity_privkey_hex invalide")?;
 
     // 2. Signe avec la nouvelle clé principale : username_hash || timestamp
-    let ts = crate::utils::timestamp::plateform::current_timestamp();
+    let ts = zenth_utils::current_timestamp();
     let mut ident_signed = Vec::with_capacity(32 + 8);
     ident_signed.extend_from_slice(&username_hash);
     ident_signed.extend_from_slice(&ts.to_le_bytes());

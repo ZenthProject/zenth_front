@@ -4,7 +4,7 @@ use prost::Message;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::db::user::NewMessage as DbNewMessage;
+use zenth_database_local::db::user::NewMessage as DbNewMessage;
 use crate::session::{get_session, get_session_async, get_session_by_token_async};
 use crate::pages::chat::crypto::sessions::{
     Session, PreKeyBundleData, X3DHCompleteData, X3DHInitResult,
@@ -15,12 +15,17 @@ use crate::pages::chat::database::queries::{
     load_session as db_load_session, save_session as db_save_session,
     Session as DbSession,
 };
-use crate::utils::timestamp::plateform::current_timestamp;
+use zenth_utils::{
+    FileInfo,
+    FileParser,
+    FileType,    
+    current_timestamp
+};
 use zenth_crypto::protocols;
 use zenth_crypto::protocols::EncryptedMessage as ProtocolsEncryptedMessage;
 use crate::pages::chat::database::encryption::{encrypt_message, decrypt_message};
 use crate::api::prekeys::{PreKeyApiClient, PreKeyConfig};
-use crate::db::user::UserDb;
+use zenth_database_local::db::user::UserDb;
 use zenth_dto::{
     DhtRequest, DhtResponse, Method,
     ZenthSignalEnvelope, EncryptedMessageBody, RatchetHeader, PreKeyMessage,
@@ -29,7 +34,6 @@ use zenth_dto::{
     InnerMessage, InnerMessageType,
 };
 use zenth_dto::zenth_signal_envelope::Content;
-use crate::utils::sanitizer::parser::{FileParser, FileType};
 
 struct ParsedInner {
     display_content: String,
@@ -1404,7 +1408,7 @@ pub async fn sync_messages(
                             let ack_mid = envelope.message_id.clone();
                             let ack_recipient = session.user_hash.clone();
                             let ack_dilithium = session.dilithium_secret.clone();
-                            let ack_ts = crate::utils::timestamp::plateform::current_timestamp();
+                            let ack_ts = current_timestamp();
                             tokio::spawn(async move {
                                 let _ = send_message_ack(&ack_mid, &ack_recipient, &ack_dilithium, ack_ts).await;
                             });

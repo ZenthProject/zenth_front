@@ -1,10 +1,8 @@
 use pqcrypto_dilithium::dilithium2;
 use pqcrypto_traits::sign::{SecretKey, DetachedSignature};
-use crate::db::{UserDb, MasterDb};
-use crate::db::paths::user_db_path;
-use crate::utils::security::secure_delete::secure_delete;
+use zenth_database_local::db::{UserDb, MasterDb};
+use zenth_database_local::db::paths::user_db_path;
 use crate::api::{DeleteApiClient, RegisterConfig, DarknetType};
-use crate::utils::timestamp::plateform::current_timestamp;
 
 /// Efface toutes les données locales d'un utilisateur de manière sécurisée.
 /// Nécessite un session_token valide pour vérifier l'identité.
@@ -39,19 +37,23 @@ pub async fn wipe_user_data(session_token: String) -> Result<String, String> {
 /// Efface les données sans vérifier les credentials.
 /// Appelé uniquement depuis Rust (login.rs) après N échecs - plus exposé au frontend.
 pub async fn wipe_user_no_auth_internal(username: String) -> Result<String, String> {
-    use crate::db::crypto::hash_username;
+    use zenth_database_local::db::crypto::hash_username;
 
     let name_hash = tokio::task::spawn_blocking({
         let username = username.clone();
         move || -> Result<String, String> {
-            let name_hash = hash_username(&username);
+            let name_hash = hash_username(&username)
+                .map_err(|e| format!("Erreur de hash: {}", e))?;
+
             let master = MasterDb::open()
                 .map_err(|e| format!("Erreur: {}", e))?;
+
             if !master.user_exists(&name_hash)
                 .map_err(|e| format!("{}", e))?
             {
                 return Err("Utilisateur introuvable".to_string());
             }
+
             Ok(name_hash)
         }
     })
@@ -90,7 +92,7 @@ pub async fn delete_account(session_token: String) -> Result<String, String> {
     .map_err(|e| format!("Thread pool error: {}", e))??;
 
     // Phase 2 (async): signer et envoyer la demande de suppression au serveur
-    let timestamp = current_timestamp();
+    let timestamp = zenth_utils::current_timestamp();
 
     let mut msg = Vec::new();
     msg.extend_from_slice(&username_hash);
@@ -129,9 +131,9 @@ async fn wipe_files_and_index(name_hash: String) -> Result<String, String> {
         let wal_path = { let mut p = db_path.clone(); p.set_extension("db-wal"); p };
         let shm_path = { let mut p = db_path.clone(); p.set_extension("db-shm"); p };
 
-        secure_delete(&wal_path).map_err(|e| format!("Erreur WAL: {}", e))?;
-        secure_delete(&shm_path).map_err(|e| format!("Erreur SHM: {}", e))?;
-        secure_delete(&db_path).map_err(|e| format!("Erreur DB: {}", e))?;
+        zenth_utils::secure_delete(&wal_path).map_err(|e| format!("Erreur WAL: {}", e))?;
+        zenth_utils::secure_delete(&shm_path).map_err(|e| format!("Erreur SHM: {}", e))?;
+        zenth_utils::secure_delete(&db_path).map_err(|e| format!("Erreur DB: {}", e))?;
 
         let master = MasterDb::open()
             .map_err(|e| format!("Erreur master DB: {}", e))?;

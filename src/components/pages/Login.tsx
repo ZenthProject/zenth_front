@@ -153,12 +153,15 @@ export default function Login() {
             </form>
           </Form>
 
-          <p className="text-center text-sm text-muted-foreground">
-            {t("login.no_account")}{" "}
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
             <Link to="/keygen" className="text-primary hover:text-accent-secondary font-medium underline transition-colors">
               {t("login.register_link")}
             </Link>
-          </p>
+            <span className="text-border select-none">·</span>
+            <Link to="/sync" className="text-primary hover:text-accent-secondary font-medium underline transition-colors">
+              {t("login.sync_link")}
+            </Link>
+          </div>
 
         </div>
       </div>

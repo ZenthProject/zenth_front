@@ -7,7 +7,7 @@ use zenth_dto::{
 use zenth_requests::{implementations::RequestsNetwork, request::Request, transports::Transport};
 use crate::api::errors::{ApiError, ApiResult, check_http_status};
 use crate::api::register::{RegisterConfig, DarknetType};
-use crate::utils::timestamp::plateform::current_timestamp;
+use zenth_utils::current_timestamp;
 
 pub struct RecoveryApiClient {
     config: RegisterConfig,

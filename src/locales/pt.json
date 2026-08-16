@@ -33,7 +33,9 @@
     "validation": {
       "username_required": "Nome de usuário obrigatório",
       "password_required": "Senha obrigatória"
-    }
+    },
+    "sync_prompt": "Conta em outro dispositivo?",
+    "sync_link": "Sincronizar"
   },
   "keygen": {
     "title": "Geração de chave",
@@ -424,5 +426,40 @@
     "back": "Voltar",
     "yes": "Sim",
     "no": "Não"
+  },
+  "sync": {
+    "title": "Sincronização",
+    "subtitle": "Sincronize este dispositivo com uma conta existente.",
+    "role_new": "Novo dispositivo",
+    "role_new_sub": "Quero receber a chave de sync de um dispositivo confiável.",
+    "role_trusted": "Dispositivo confiável",
+    "role_trusted_sub": "Já estou conectado e quero certificar um novo dispositivo.",
+    "back": "Voltar",
+    "back_to_login": "Voltar ao login",
+    "generate_btn": "Gerar chaves de emparelhamento",
+    "generating": "Gerando…",
+    "done": "Concluído",
+    "retry": "Recomeçar",
+    "need_login": "Você precisa estar conectado para usar este recurso.",
+    "keygen_title": "Gerando chaves de emparelhamento",
+    "keygen_hint_mouse": "Mova o mouse para gerar entropia",
+    "keygen_hint_touch": "Segure o dispositivo — os sensores coletam entropia",
+    "keygen_preview_label": "Chave sendo gerada",
+    "step_role": "Papel",
+    "step_password": "Confirmação",
+    "step_keygen": "Geração de chaves",
+    "step_qr": "QR Code",
+    "step_scan": "Digitalizar",
+    "step_verify": "Verificação",
+    "step_done": "Concluído",
+    "need_account_hint": "Para vincular este dispositivo, você deve primeiro criar uma conta ou fazer login.",
+    "create_account_btn": "Criar conta",
+    "login_btn": "Entrar",
+    "show_qr_hint": "Mostre este código ao seu dispositivo confiável.",
+    "success_title": "Dispositivo sincronizado!",
+    "success_detail": "Sua conta foi sincronizada neste dispositivo.",
+    "goto_chat": "Continuar",
+    "error_network": "Servidor inacessível. Verifique sua conexão e tente novamente.",
+    "keygen_server_wait": "Configurando as chaves de emparelhamento…"
   }
 }

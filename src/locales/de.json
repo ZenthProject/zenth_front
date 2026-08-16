@@ -33,12 +33,14 @@
     "validation": {
       "username_required": "Benutzername erforderlich",
       "password_required": "Passwort erforderlich"
-    }
+    },
+    "sync_prompt": "Konto auf einem anderen Gerät?",
+    "sync_link": "Synchronisieren"
   },
   "keygen": {
     "title": "Schlüsselerzeugung",
     "hint_mouse": "Maus bewegen, um Entropie zu erzeugen",
-    "hint_touch": "Halten Sie das Telefon natürlich — Bewegungssensoren sammeln Entropie",
+    "hint_touch": "Halten Sie das Telefon natürlich - Bewegungssensoren sammeln Entropie",
     "entropy_progress": "Generierung... {{percent}}%",
     "entropy_complete": "Schlüssel generiert — bereit zur Validierung",
     "key_preview": "Ihr Schlüssel (Vorschau)",
@@ -424,5 +426,40 @@
     "back": "Zurück",
     "yes": "Ja",
     "no": "Nein"
+  },
+  "sync": {
+    "title": "Synchronisierung",
+    "subtitle": "Dieses Gerät mit einem bestehenden Konto synchronisieren.",
+    "role_new": "Neues Gerät",
+    "role_new_sub": "Ich möchte den Sync-Schlüssel von einem vertrauenswürdigen Gerät erhalten.",
+    "role_trusted": "Vertrauenswürdiges Gerät",
+    "role_trusted_sub": "Ich bin bereits eingeloggt und möchte ein neues Gerät zertifizieren.",
+    "back": "Zurück",
+    "back_to_login": "Zurück zur Anmeldung",
+    "generate_btn": "Kopplungsschlüssel generieren",
+    "generating": "Generiere…",
+    "done": "Fertig",
+    "retry": "Neu starten",
+    "need_login": "Du musst eingeloggt sein, um diese Funktion zu nutzen.",
+    "keygen_title": "Kopplungsschlüssel generieren",
+    "keygen_hint_mouse": "Bewege die Maus für Entropie",
+    "keygen_hint_touch": "Halte dein Gerät — Sensoren sammeln Entropie",
+    "keygen_preview_label": "Schlüssel wird generiert",
+    "step_role": "Rolle",
+    "step_password": "Bestätigung",
+    "step_keygen": "Schlüsselgenerierung",
+    "step_qr": "QR-Code",
+    "step_scan": "Scannen",
+    "step_verify": "Verifizierung",
+    "step_done": "Fertig",
+    "need_account_hint": "Um dieses Gerät zu verknüpfen, musst du zuerst ein Konto erstellen oder dich anmelden.",
+    "create_account_btn": "Konto erstellen",
+    "login_btn": "Anmelden",
+    "show_qr_hint": "Zeigen Sie diesen Code Ihrem vertrauenswürdigen Gerät.",
+    "success_title": "Gerät synchronisiert!",
+    "success_detail": "Ihr Konto wurde auf dieses Gerät synchronisiert.",
+    "goto_chat": "Weiter",
+    "error_network": "Server nicht erreichbar. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "keygen_server_wait": "Paarungsschlüssel werden eingerichtet…"
   }
 }

@@ -5,9 +5,7 @@
 #![allow(dead_code, unused_variables, unused_mut, unused_imports)]
 
 // Internal modules
-mod db;
 mod pages;
-mod utils;
 mod api;
 mod commands;
 mod websocket;
@@ -15,7 +13,11 @@ mod plugins;
 pub mod session;
 pub mod config;
 
-use db::{MasterDb, paths::init_db_dir};
+use zenth_database_local::db::{
+    MasterDb, 
+    paths::init_db_dir
+};
+use zenth_database_local;
 use tauri::Manager;
 
 /// Warns in debug mode if TLS certificate validation is disabled.
@@ -110,19 +112,12 @@ use pages::{
     }
 };
 
-use utils::emergency::{
-    get_emergency_by_country,
-    get_all_emergency_numbers,
-    list_emergency_countries,
-};
-
 use commands::{
     analyze_file,
     sanitize_file,
     sanitize_by_type,
     get_supported_formats,
     share_text,
-    synchronize_accounts
 };
 
 use websocket::{
@@ -224,9 +219,6 @@ pub fn run() {
             init_self_space,
             get_chat_ttl,
             set_chat_ttl,
-            get_emergency_by_country,
-            get_all_emergency_numbers,
-            list_emergency_countries,
             analyze_file,
             sanitize_file,
             sanitize_by_type,
@@ -250,7 +242,6 @@ pub fn run() {
             download_update,
             apply_update,
             share_text,
-            synchronize_accounts,
             store_credential,
             retrieve_credential,
             delete_credential,

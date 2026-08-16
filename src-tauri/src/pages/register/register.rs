@@ -2,7 +2,7 @@ use zenth_crypto::asymmetric::dilithium::dilithium::sign_friendship;
 
 use crate::pages::register::crypto::{
     key::{
-        generate_username_hash,
+        generate_public_key_hash,
         derive_keys_from_password_with_salt,
         generate_user_crypto_keys,
         generate_x25519_keypair,
@@ -10,22 +10,19 @@ use crate::pages::register::crypto::{
     },
     commitment::generate_zkp_proof
 };
-use crate::pages::keygen::crypto::key_gen::generate_network_key;
+use crate::pages::keygen::crypto::key_gen::{generate_network_key, generate_network_key_with_entropy};
 use rand08::rngs::OsRng as OsRng08;
 use rand08::RngCore;
 use pqcrypto_traits::sign::{PublicKey, SecretKey, DetachedSignature as TraitDetachedSignature};
-use crate::utils::timestamp::plateform::unix_timestamp;
 use zenth_dto::{
     RegistrationRequest, PreKeyBundle, IdentityKey,
     SignatureKeyType, KemPublicKey, KemKeyType, ZkpType,
 };
-
-use crate::utils::security::securitypassword::SecurityPassword;
-use crate::utils::security::cipher_key::encrypt_key_with_password;
+use pqcrypto_dilithium::dilithium2::PublicKey as DiliPubKey;
 use crate::api::register::{RegisterConfig, RegisterApiClient, DarknetType};
 use crate::api::errors::ApiError;
-use crate::db::UserDb;
-use crate::db::user::NewUserInfo;
+use zenth_database_local::db::UserDb;
+use zenth_database_local::db::user::NewUserInfo;
 
 /// Number of one-time pre-keys to generate at registration
 const NUM_ONE_TIME_PREKEYS: u32 = 100;
@@ -81,7 +78,7 @@ fn generate_one_time_prekeys(
         let (secret_key, public_key) = generate_x25519_keypair();
 
         // Encrypt the private key
-        let encrypted = encrypt_key_with_password(
+        let encrypted = zenth_utils::encrypt_key_with_password(
             secret_key.as_bytes(),
             encryption_key,
             username,
@@ -117,7 +114,7 @@ fn generate_signed_prekey(
     let signature = signature_obj.as_bytes().to_vec();
 
     // Encrypt the private key
-    let encrypted = encrypt_key_with_password(
+    let encrypted = zenth_utils::encrypt_key_with_password(
         secret_key.as_bytes(),
         encryption_key,
         username,
@@ -143,7 +140,7 @@ fn generate_kyber_prekey(
     let (public_bytes, secret_bytes) = generate_kyber_keypair()?;
 
     // Encrypt the private key
-    let encrypted = encrypt_key_with_password(
+    let encrypted = zenth_utils::encrypt_key_with_password(
         &secret_bytes,
         encryption_key,
         username,
@@ -197,7 +194,7 @@ struct PreRegistrationData {
     user_db: UserDb,
     hash_password: Vec<u8>,
     network_key_bytes: Vec<u8>,
-    username_hash: Vec<u8>,
+    hash_identity: String,
     registration_id: u32,
     identity_key_dilithium: Vec<u8>,
     identity_key_dilithium_secret: Vec<u8>,
@@ -213,31 +210,38 @@ struct PreRegistrationData {
 unsafe impl Send for PreRegistrationData {}
 
 #[tauri::command]
-pub async fn register(username: String, password: String) -> Result<String, String> {
+pub async fn register(
+    username: String,
+    password: String,
+    generated_key: Option<String>,
+) -> Result<String, String> {
     // Phase 1 (blocking thread): toute la crypto coûteuse - Argon2, Dilithium, Kyber, ZK-STARK
     let prep = tokio::task::spawn_blocking({
         let username = username.clone();
         let password = password.clone();
+        let generated_key = generated_key.clone();
         move || -> Result<PreRegistrationData, String> {
-            SecurityPassword::check_register_params_no_key(&password, &username)?;
+            zenth_utils::SecurityPassword::check_register_params_no_key(&password, &username)?;
 
-            let network_key = generate_network_key()
-                .map_err(|e| format!("Failed to generate network key: {}", e))?;
+            let network_key = match &generated_key {
+                Some(key) => generate_network_key_with_entropy(key.as_bytes()),
+                None      => generate_network_key(),
+            }.map_err(|e| format!("Failed to generate network key: {}", e))?;
             let network_key_bytes = network_key.full_key.as_bytes().to_vec();
-
-            let username_hash = generate_username_hash(&username)?;
 
             // Argon2id via SQLCipher - sur le thread pool
             let user_db = UserDb::create(&username, &password)
                 .map_err(|e| format!("Failed to create user database: {}", e))?;
 
-            let master_db = crate::db::MasterDb::open()
+            let master_db = zenth_database_local::db::MasterDb::open()
                 .map_err(|e| format!("Failed to open master database: {}", e))?;
             let user_entry = master_db.get_user(&username)
                 .map_err(|e| format!("Failed to get user entry: {}", e))?;
 
             // Argon2id - sur le thread pool
             let hash_password = derive_keys_from_password_with_salt(&password, &user_entry.salt)?;
+
+            println!("--");
 
             // Dilithium + Kyber keypair generation - sur le thread pool
             let (
@@ -249,6 +253,12 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
                 kyber_secret_bytes
             ) = generate_user_crypto_keys()?;
 
+
+            let hash_identity = generate_public_key_hash(&dilithium_public)?;
+            let hash_identity_bytes = hex::decode(&hash_identity)
+                .map_err(|e| format!("Invalid hash_identity encoding: {}", e))?;
+            println!("{:?}", hash_identity);
+
             let registration_id = OsRng08.next_u32();
 
             // 100 X25519 prekeys + Kyber prekeys - sur le thread pool
@@ -258,11 +268,13 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
                 username.as_bytes(),
             )?;
 
+            println!("1A");
+
             let first_prekey = prekey_bundle.one_time_pre_keys.first()
                 .ok_or("No pre-keys generated")?;
 
             let pre_key_bundle = PreKeyBundle {
-                user_hash_id: username_hash.clone(),
+                user_hash_id: hash_identity_bytes.clone(),
                 registration_id,
                 identity_key: Some(IdentityKey {
                     key_type: SignatureKeyType::Dilithium2 as i32,
@@ -285,7 +297,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
                 }),
             };
 
-            let timestamp = unix_timestamp()?;
+            let timestamp = zenth_utils::unix_timestamp()?;
 
             // ZK-STARK proof (réel) - prouve Poseidon(zkp_portion || domain) = commitment
             // sans révéler la clé secrète. Opération la plus coûteuse ~500ms.
@@ -294,12 +306,13 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
             let zkp_public_input_str = hex::encode(&zkp_proof.public_inputs.commitment);
 
             let mut signature_data = Vec::new();
-            signature_data.extend_from_slice(&username_hash);
+            signature_data.extend_from_slice(&hash_identity_bytes);
             signature_data.extend_from_slice(&password_commitment);
             signature_data.extend_from_slice(zkp_public_input_str.as_bytes());
 
             let identity_signature_obj = sign_friendship(&dilithium_secret, &signature_data);
             let identity_signature = identity_signature_obj.as_bytes().to_vec();
+
 
             let pre_key_bundle_bytes = {
                 use prost::Message;
@@ -310,7 +323,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
             };
 
             let registration_request = RegistrationRequest {
-                username_hash: username_hash.clone(),
+                username_hash: hash_identity_bytes.clone(),
                 pre_key_bundle: pre_key_bundle_bytes,
                 proof_type: ZkpType::Stark as i32,
                 password_commitment,
@@ -324,7 +337,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
                 user_db,
                 hash_password,
                 network_key_bytes,
-                username_hash,
+                hash_identity,
                 registration_id,
                 identity_key_dilithium,
                 identity_key_dilithium_secret,
@@ -358,7 +371,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
         Ok(r) => r,
         Err(e) => {
             // Nettoie l'entrée partielle (master DB + fichier DB utilisateur)
-            let _ = crate::db::MasterDb::open()
+            let _ = zenth_database_local::db::MasterDb::open()
                 .and_then(|mdb| mdb.delete_user(&username));
             return Err(match e {
                 ApiError::Server(_, ref msg) if msg.to_lowercase().contains("already exist") => {
@@ -382,7 +395,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
     };
 
     if !registration_response.success {
-        let _ = crate::db::MasterDb::open()
+        let _ = zenth_database_local::db::MasterDb::open()
             .and_then(|mdb| mdb.delete_user(&username));
         return Err(registration_response.error_message);
     }
@@ -391,7 +404,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
     let prekey_count = prep.prekey_bundle.one_time_pre_keys.len();
     let username_for_cleanup = username.clone();
     let phase3_result = tokio::task::spawn_blocking(move || -> Result<(), String> {
-        let encrypted_network_key = encrypt_key_with_password(
+        let encrypted_network_key = zenth_utils::encrypt_key_with_password(
             &prep.network_key_bytes,
             &prep.hash_password,
             username.as_bytes(),
@@ -407,7 +420,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
         let keys_json = serde_json::to_vec(&keys_to_store)
             .map_err(|e| format!("Failed to serialize keys: {}", e))?;
 
-        let encrypted_keys = encrypt_key_with_password(
+        let encrypted_keys = zenth_utils::encrypt_key_with_password(
             &keys_json,
             &prep.hash_password,
             username.as_bytes(),
@@ -417,7 +430,7 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
 
         let user_info = NewUserInfo {
             pseudo: username.clone(),
-            username_hash: hex::encode(&prep.username_hash),
+            username_hash: prep.hash_identity.clone(),
             encrypted_network_key,
             network_key_iv: vec![],
             encrypted_identity_keys: encrypted_keys,
@@ -440,9 +453,10 @@ pub async fn register(username: String, password: String) -> Result<String, Stri
     .await
     .map_err(|e| format!("Thread pool error: {}", e))?;
 
+
     if let Err(e) = phase3_result {
         // Sauvegarde locale échouée - nettoie pour permettre un réessai propre
-        let _ = crate::db::MasterDb::open()
+        let _ = zenth_database_local::db::MasterDb::open()
             .and_then(|mdb| mdb.delete_user(&username_for_cleanup));
         return Err(e);
     }
@@ -456,14 +470,13 @@ pub fn generate_and_save_otpks(
     encryption_key: &[u8],
     username: &[u8],
     user_id: i64,
-    user_db: &crate::db::UserDb,
+    user_db: &zenth_database_local::db::UserDb,
 ) -> Result<Vec<(u32, Vec<u8>)>, String> {
     use crate::api::prekeys::DEFAULT_PREKEY_COUNT;
-    use crate::utils::timestamp::plateform::current_timestamp;
 
     let new_prekeys = generate_one_time_prekeys(DEFAULT_PREKEY_COUNT, encryption_key, username)?;
     let conn = user_db.conn();
-    let ts = current_timestamp() as i64;
+    let ts = zenth_utils::current_timestamp() as i64;
 
     for pk in &new_prekeys {
         conn.execute(
@@ -492,12 +505,11 @@ pub async fn upload_otpks(
     public_prekeys: Vec<(u32, Vec<u8>)>,
 ) -> Result<u32, String> {
     use crate::api::prekeys::{PreKeyApiClient, PreKeyConfig};
-    use crate::utils::timestamp::plateform::current_timestamp;
     use pqcrypto_dilithium::dilithium2;
     use pqcrypto_traits::sign::DetachedSignature as TraitSig;
     use zenth_dto::PreKey;
 
-    let ts = current_timestamp();
+    let ts = zenth_utils::current_timestamp();
     let mut msg = Vec::new();
     msg.extend_from_slice(&user_hash);
     msg.extend_from_slice(&ts.to_le_bytes());

@@ -9,7 +9,7 @@ use prost::Message;
 use std::time::Duration;
 use rand::Rng;
 use crate::api::errors::{ApiError, ApiResult};
-use crate::utils::timestamp::plateform::current_timestamp;
+use zenth_utils::current_timestamp;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DarknetType {

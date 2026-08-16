@@ -4,7 +4,7 @@ use pqcrypto_dilithium::dilithium2;
 use pqcrypto_traits::sign::{PublicKey, SecretKey, DetachedSignature};
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
-use crate::db::UserDb;
+use zenth_database_local::db::UserDb;
 use zenth_crypto::kem::{PublicKey as KemPublicKey, SecretKey as KemSecretKey};
 
 // Constantes de taille clés
@@ -479,7 +479,7 @@ pub async fn send_sync_key(
 
     // Stocker la Sync Key côté appareil de confiance
     let _ = tokio::task::spawn_blocking(move || {
-        if let Ok(db) = crate::db::user::UserDb::open(&username, &password) {
+        if let Ok(db) = zenth_database_local::db::user::UserDb::open(&username, &password) {
             let _ = db.save_paired_device(&peer_pubkey, &shared_secret);
         }
     }).await;
@@ -561,7 +561,7 @@ pub async fn fetch_sync_key(
     let shared_clone = shared_secret.clone();
     let password_clone = session.password.clone();
     let _ = tokio::task::spawn_blocking(move || {
-        if let Ok(db) = crate::db::user::UserDb::open(&username, &password_clone) {
+        if let Ok(db) = zenth_database_local::db::user::UserDb::open(&username, &password_clone) {
             let _ = db.save_paired_device(&pubkey_tel, &shared_clone);
         }
     }).await;
@@ -582,8 +582,7 @@ pub async fn fetch_sync_key(
         if let Ok(trusted_hash_bytes) = hex::decode(&trusted_username_hash_hex) {
             if trusted_hash_bytes.len() == 32 {
                 // 1. Signe et supprime le compte temporaire du DHT
-                use crate::utils::timestamp::plateform::current_timestamp;
-                let ts = current_timestamp();
+                let ts = zenth_utils::current_timestamp();
                 let mut msg_to_sign = Vec::new();
                 msg_to_sign.extend_from_slice(&session.user_hash);
                 msg_to_sign.extend_from_slice(&ts.to_le_bytes());
@@ -617,12 +616,12 @@ pub async fn fetch_sync_key(
                 let new_username    = trusted_username.clone();
                 let rollback_pubkey = pubkey_tel_for_rollback;
                 let rename_result = tokio::task::spawn_blocking(move || -> Result<String, String> {
-                    let db = crate::db::user::UserDb::open(&username_upd, &password_upd)
+                    let db = zenth_database_local::db::user::UserDb::open(&username_upd, &password_upd)
                         .map_err(|e| format!("db: {}", e))?;
                     db.update_username_hash(&new_hash_hex)
                         .map_err(|e| format!("hash update: {}", e))?;
                     if !new_username.is_empty() && new_username != username_upd {
-                        let master = crate::db::MasterDb::open()
+                        let master = zenth_database_local::db::MasterDb::open()
                             .map_err(|e| format!("master db: {}", e))?;
                         if master.rename_user(&username_upd, &new_username).is_err() {
                             // Rollback : rétablit le hash d'origine et supprime l'appairage
@@ -800,7 +799,7 @@ async fn relay_push_event(username: &str, password: &str, event: RelayEvent) -> 
     let sender_secret = session.dilithium_secret.clone();
 
     let pairs = tokio::task::spawn_blocking(move || -> Result<Vec<(Vec<u8>, Vec<u8>)>, String> {
-        let db = crate::db::user::UserDb::open(&un, &pw).map_err(|e| format!("DB: {}", e))?;
+        let db = zenth_database_local::db::user::UserDb::open(&un, &pw).map_err(|e| format!("DB: {}", e))?;
         db.get_all_paired_devices().map_err(|e| format!("DB: {}", e))
     })
     .await
@@ -1104,7 +1103,7 @@ async fn relay_push_manifest_internal(username: String, password: String, own_ha
     let oh = own_hash.clone();
 
     let manifest = tokio::task::spawn_blocking(move || -> Result<RelayEvent, String> {
-        let db = crate::db::user::UserDb::open(&un, &pw)
+        let db = zenth_database_local::db::user::UserDb::open(&un, &pw)
             .map_err(|e| format!("DB: {}", e))?;
         Ok(compute_sync_manifest(db.conn(), &oh))
     })
@@ -1152,7 +1151,7 @@ pub async fn list_paired_devices(session_token: String) -> Result<Vec<serde_json
     let password = session.password.clone();
 
     tokio::task::spawn_blocking(move || -> Result<Vec<serde_json::Value>, String> {
-        let db = crate::db::user::UserDb::open(&username, &password)
+        let db = zenth_database_local::db::user::UserDb::open(&username, &password)
             .map_err(|e| format!("DB: {}", e))?;
         let devices = db.list_paired_devices_full().map_err(|e| format!("DB: {}", e))?;
         Ok(devices.iter().map(|d| serde_json::json!({
@@ -1175,7 +1174,7 @@ pub async fn revoke_paired_device(session_token: String, pubkey_hex: String) -> 
         .map_err(|_| "pubkey_hex invalide".to_string())?;
 
     tokio::task::spawn_blocking(move || -> Result<(), String> {
-        let db = crate::db::user::UserDb::open(&username, &password)
+        let db = zenth_database_local::db::user::UserDb::open(&username, &password)
             .map_err(|e| format!("DB: {}", e))?;
         db.remove_paired_device(&pubkey_bytes)
             .map_err(|e| format!("DB: {}", e))
@@ -1192,7 +1191,7 @@ pub async fn get_relay_status(session_token: String) -> Result<serde_json::Value
     let password = session.password.clone();
 
     tokio::task::spawn_blocking(move || -> Result<serde_json::Value, String> {
-        let db = crate::db::user::UserDb::open(&username, &password)
+        let db = zenth_database_local::db::user::UserDb::open(&username, &password)
             .map_err(|e| format!("DB: {}", e))?;
         let pairs = db.get_all_paired_devices().map_err(|e| format!("DB: {}", e))?;
         let cursor = db.get_relay_cursor().unwrap_or(0);
@@ -1224,7 +1223,7 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
         let username = username.clone();
         let password = password.clone();
         move || -> Result<(Vec<(Vec<u8>, Vec<u8>)>, i64), String> {
-            let db = crate::db::user::UserDb::open(&username, &password)
+            let db = zenth_database_local::db::user::UserDb::open(&username, &password)
                 .map_err(|e| format!("DB: {}", e))?;
             let pairs = db.get_all_paired_devices().map_err(|e| format!("DB: {}", e))?;
             let cursor = db.get_relay_cursor().unwrap_or(0);
@@ -1284,7 +1283,7 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
         let own_hash2 = own_hash.clone();
 
         let saved = tokio::task::spawn_blocking(move || -> bool {
-            let db = match crate::db::user::UserDb::open(&username2, &password2) {
+            let db = match zenth_database_local::db::user::UserDb::open(&username2, &password2) {
                 Ok(d) => d,
                 Err(_) => return false,
             };
@@ -1348,7 +1347,7 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
                     let xk_bytes = decode_opt(xk);
                     let sl_bytes = decode_opt(sl);
                     let sr_bytes = decode_opt(sr);
-                    let now = crate::utils::timestamp::plateform::current_timestamp() as i64;
+                    let now = zenth_utils::current_timestamp() as i64;
 
                     // Préfixe de hash utilisé comme pseudo par défaut quand aucun nom n'est connu
                     let hash_default = fh[..8.min(fh.len())].to_string();
@@ -1398,7 +1397,7 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
                         }
                     }
 
-                    let friend = crate::db::user::NewFriend {
+                    let friend = zenth_database_local::db::user::NewFriend {
                         pseudo: fp,
                         username_hash: fh.clone(),
                         identity_key_public: ik_bytes,
@@ -1446,9 +1445,9 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
                         None => vec![],
                     };
                     let sig_bytes = match EncodeImpl::base64_vecdecode(&sig) { Ok(b) => b, Err(_) => return false };
-                    let now = crate::utils::timestamp::plateform::current_timestamp() as i64;
+                    let now = zenth_utils::current_timestamp() as i64;
 
-                    let request = crate::db::user::NewPendingRequest {
+                    let request = zenth_database_local::db::user::NewPendingRequest {
                         direction: dir,
                         remote_username_hash: fh,
                         remote_pseudo: fp,
@@ -1466,7 +1465,7 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
 
                 // Manifeste MD5 reçu : calculer le diff et renvoyer le patch
                 RelayEvent::SyncManifest { msg_hashes, settings_hash, contact_hashes } => {
-                    if let Ok(db2) = crate::db::user::UserDb::open(&username2, &password2) {
+                    if let Ok(db2) = zenth_database_local::db::user::UserDb::open(&username2, &password2) {
                         if let Some(patch) = build_sync_patch(
                             db2.conn(), &data_key2, &own_hash2,
                             &msg_hashes, &settings_hash, &contact_hashes,
@@ -1547,7 +1546,7 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
                         let ik_bytes = match EncodeImpl::base64_vecdecode(&pc.ik) {
                             Ok(b) => b, Err(_) => continue,
                         };
-                        let now = crate::utils::timestamp::plateform::current_timestamp() as i64;
+                        let now = zenth_utils::current_timestamp() as i64;
 
                         // Vérifie si un enregistrement existe, et s'il a déjà de vraies clés
                         let existing = db.conn().query_row(
@@ -1623,7 +1622,7 @@ pub async fn relay_pull_messages(session_token: String) -> Result<u32, String> {
     let username3 = username.clone();
     let password3 = password.clone();
     let _ = tokio::task::spawn_blocking(move || {
-        if let Ok(db) = crate::db::user::UserDb::open(&username3, &password3) {
+        if let Ok(db) = zenth_database_local::db::user::UserDb::open(&username3, &password3) {
             let _ = db.set_relay_cursor(max_id);
         }
     }).await;

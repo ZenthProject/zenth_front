@@ -33,7 +33,9 @@
     "validation": {
       "username_required": "Nome utente richiesto",
       "password_required": "Password richiesta"
-    }
+    },
+    "sync_prompt": "Account su un altro dispositivo?",
+    "sync_link": "Sincronizza"
   },
   "keygen": {
     "title": "Generazione chiave",
@@ -424,5 +426,40 @@
     "back": "Indietro",
     "yes": "Sì",
     "no": "No"
+  },
+  "sync": {
+    "title": "Sincronizzazione",
+    "subtitle": "Sincronizza questo dispositivo con un account esistente.",
+    "role_new": "Nuovo dispositivo",
+    "role_new_sub": "Voglio ricevere la chiave di sync da un dispositivo fidato.",
+    "role_trusted": "Dispositivo fidato",
+    "role_trusted_sub": "Sono già connesso e voglio certificare un nuovo dispositivo.",
+    "back": "Indietro",
+    "back_to_login": "Torna al login",
+    "generate_btn": "Genera chiavi di accoppiamento",
+    "generating": "Generazione in corso…",
+    "done": "Fine",
+    "retry": "Ricomincia",
+    "need_login": "Devi essere connesso per usare questa funzionalità.",
+    "keygen_title": "Generazione chiavi di accoppiamento",
+    "keygen_hint_mouse": "Muovi il mouse per generare entropia",
+    "keygen_hint_touch": "Tieni il dispositivo — i sensori raccolgono entropia",
+    "keygen_preview_label": "Chiave in generazione",
+    "step_role": "Ruolo",
+    "step_password": "Conferma",
+    "step_keygen": "Generazione chiavi",
+    "step_qr": "Codice QR",
+    "step_scan": "Scansione",
+    "step_verify": "Verifica",
+    "step_done": "Fatto",
+    "need_account_hint": "Per collegare questo dispositivo, devi prima creare un account o accedere.",
+    "create_account_btn": "Crea account",
+    "login_btn": "Accedi",
+    "show_qr_hint": "Mostra questo codice al tuo dispositivo di fiducia.",
+    "success_title": "Dispositivo sincronizzato!",
+    "success_detail": "Il tuo account è stato sincronizzato su questo dispositivo.",
+    "goto_chat": "Continua",
+    "error_network": "Server non raggiungibile. Controlla la connessione e riprova.",
+    "keygen_server_wait": "Configurazione delle chiavi di abbinamento…"
   }
 }

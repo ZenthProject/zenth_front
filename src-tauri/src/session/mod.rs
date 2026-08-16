@@ -5,18 +5,16 @@
 
 mod config;
 pub use config::SessionConfig;
-
+use zenth_crypto::kdf::argon2id::Argon2idHasher;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
 use once_cell::sync::Lazy;
 use rusqlite::Connection;
 use uuid::Uuid;
 
-use crate::db::MasterDb;
-use crate::db::crypto::{derive_sqlcipher_key, key_to_sqlcipher_pragma};
+use zenth_database_local::db::MasterDb;
+use zenth_database_local::db::crypto::key_to_sqlcipher_pragma;
 use crate::pages::register::crypto::key::derive_keys_from_password_with_salt;
-use crate::utils::security::cipher_key::decrypt_key_with_password;
-use crate::utils::timestamp::plateform::current_timestamp;
 
 /// Cached database connection with user data
 pub struct CachedConnection {
@@ -144,7 +142,7 @@ fn open_user_db(username: &str, password: &str) -> Result<Connection, String> {
         .map_err(|e| format!("User not found: {}", e))?;
 
     let db_path = MasterDb::user_db_path(&entry.name_hash);
-    let key = derive_sqlcipher_key(password, &entry.salt)
+    let key = Argon2idHasher::derive_sqlcipher_key(password, &entry.salt)
         .map_err(|e| format!("Failed to derive key: {}", e))?;
     let pragma_key = key_to_sqlcipher_pragma(&key);
 
@@ -307,7 +305,7 @@ fn create_session(username: &str, password: &str) -> Result<CachedSession, Strin
 
     let password_hash = derive_keys_from_password_with_salt(password, &user_entry.salt)?;
 
-    let decrypted_keys_json = decrypt_key_with_password(
+    let decrypted_keys_json = zenth_utils::decrypt_key_with_password(
         &encrypted_identity_keys,
         &password_hash,
         username.as_bytes(),
@@ -434,7 +432,7 @@ pub fn clear_all_sessions() {
     username_map.clear();
 }
 
-use crate::db::user::{Friend, NewFriend, Message, NewMessage, PendingRequest};
+use zenth_database_local::db::user::{Friend, NewFriend, Message, NewMessage, PendingRequest};
 
 impl CachedSession {
     /// Clears the in-memory friends cache. Call this after any add/remove operation.
@@ -633,7 +631,7 @@ impl CachedSession {
     /// Returns `Err` if the update query fails.
     pub fn update_message_status(&self, message_id: &str, status: &str) -> Result<(), String> {
         self.with_db(|conn| {
-            let now = current_timestamp() as i64;
+            let now = zenth_utils::current_timestamp() as i64;
 
             let (delivered, read) = match status {
                 "delivered" => (Some(now), None),
@@ -794,7 +792,7 @@ impl CachedSession {
     /// Returns `Err` if the delete query fails.
     pub fn cleanup_expired_requests(&self) -> Result<usize, String> {
         self.with_db(|conn| {
-            let now = current_timestamp() as i64;
+            let now = zenth_utils::current_timestamp() as i64;
 
             let deleted = conn.execute(
                 "DELETE FROM pending_friend_requests WHERE expires_at < ?1",
@@ -842,7 +840,7 @@ impl CachedSession {
     /// Returns `Err` if the insert fails.
     pub fn add_friend(&self, friend: &NewFriend) -> Result<i64, String> {
         let id = self.with_db(|conn| {
-            let now = current_timestamp() as i64;
+            let now = zenth_utils::current_timestamp() as i64;
 
             conn.execute(
                 "INSERT INTO friends (pseudo, username_hash, identity_key_public, kyber_public_key,
@@ -887,7 +885,7 @@ impl CachedSession {
             let encrypted: Vec<u8> = stmt.query_row([], |row| row.get(0))
                 .map_err(|_| "No signed pre-key found".to_string())?;
 
-            let decrypted = crate::utils::security::cipher_key::decrypt_key_with_password(
+            let decrypted = zenth_utils::decrypt_key_with_password(
                 &encrypted,
                 &self.password_hash,
                 self.username.as_bytes(),
@@ -905,8 +903,8 @@ impl CachedSession {
     /// # Errors
     ///
     /// Returns `Err` if the database cannot be opened.
-    pub fn get_user_db(&self) -> Result<crate::db::user::UserDb, String> {
-        crate::db::user::UserDb::open(&self.username, &self.password)
+    pub fn get_user_db(&self) -> Result<zenth_database_local::db::user::UserDb, String> {
+        zenth_database_local::db::user::UserDb::open(&self.username, &self.password)
             .map_err(|e| format!("Failed to open user database: {:?}", e))
     }
 
@@ -926,7 +924,7 @@ impl CachedSession {
             let encrypted: Vec<u8> = stmt.query_row([signed_pre_key_id], |row| row.get(0))
                 .map_err(|_| format!("Signed pre-key {} not found", signed_pre_key_id))?;
 
-            let decrypted = crate::utils::security::cipher_key::decrypt_key_with_password(
+            let decrypted = zenth_utils::decrypt_key_with_password(
                 &encrypted,
                 &self.password_hash,
                 self.username.as_bytes(),
@@ -958,7 +956,7 @@ impl CachedSession {
 
             match result {
                 Ok((id, encrypted)) => {
-                    let decrypted = crate::utils::security::cipher_key::decrypt_key_with_password(
+                    let decrypted = zenth_utils::decrypt_key_with_password(
                         &encrypted,
                         &self.password_hash,
                         self.username.as_bytes(),

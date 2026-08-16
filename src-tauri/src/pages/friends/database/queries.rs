@@ -1,7 +1,7 @@
 use rusqlite::Connection;
-use crate::db::user::{UserDb, NewPendingRequest, PendingRequest, NewFriend, Friend};
-use crate::db::error::DbError;
-use crate::utils::timestamp::plateform::current_timestamp;
+use zenth_database_local::db::user::{UserDb, NewPendingRequest, PendingRequest, NewFriend, Friend};
+use zenth_database_local::db::error::DbError;
+use zenth_utils::current_timestamp;
 use serde::{Deserialize, Serialize};
 
 /// Duree d'expiration des demandes d'ami (7 jours en secondes)

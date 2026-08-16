@@ -3,10 +3,9 @@ use pqcrypto_dilithium::dilithium2;
 use pqcrypto_traits::sign::{SecretKey, DetachedSignature};
 use prost::Message;
 use serde::{Deserialize, Serialize};
-
-use crate::db::{UserDb, MasterDb};
+use zenth_utils::current_timestamp;
+use zenth_database_local::db::{UserDb, MasterDb};
 use crate::pages::register::crypto::key::derive_keys_from_password_with_salt;
-use crate::utils::security::cipher_key::decrypt_key_with_password;
 use crate::session::{get_session_async, get_session_by_token_async};
 use crate::api::{FriendConfig, DarknetType, RegisterConfig};
 use crate::pages::friends::database::queries::{
@@ -17,7 +16,6 @@ use crate::pages::friends::database::queries::{
     reject_friend_request as db_reject_friend_request,
     add_friend_from_accepted_request,
 };
-use crate::utils::timestamp::plateform::current_timestamp;
 use zenth_dto::{
     FriendRequest as DtoFriendRequest, DhtRequest, DhtResponse, Method,
     PreKeyBundle, IdentityKey, KemPublicKey, SignatureKeyType, KemKeyType,
@@ -835,7 +833,7 @@ pub async fn sync_friend_responses(
     }
 
     // Mémoriser le timestamp pour ne pas retraiter les mêmes réponses au prochain sync
-    let now_ts = crate::utils::timestamp::plateform::current_timestamp().to_string();
+    let now_ts = current_timestamp().to_string();
     let _ = session.set_setting("last_response_sync_ts", &now_ts);
 
     Ok(SyncResult {
@@ -1033,7 +1031,7 @@ pub async fn list_blocked_friends(
         ).map_err(|e| format!("Prepare error: {}", e))?;
 
         let rows = stmt.query_map([], |row| {
-            Ok(crate::db::user::Friend {
+            Ok(zenth_database_local::db::user::Friend {
                 id: row.get(0)?,
                 pseudo: row.get(1)?,
                 username_hash: row.get(2)?,
@@ -1121,7 +1119,7 @@ pub async fn rename_friend(
     }
     let session = get_session_by_token_async(session_token).await?;
     session.with_db(|conn| -> Result<(), String> {
-        let now = crate::utils::timestamp::plateform::current_timestamp() as i64;
+        let now = current_timestamp() as i64;
         conn.execute(
             "UPDATE friends SET pseudo = ?1, updated_at = ?2 WHERE id = ?3",
             rusqlite::params![pseudo, now, friend_id],
@@ -1546,7 +1544,7 @@ pub async fn check_conversation_pin(
                  FROM friends WHERE id = ?1 AND pin_hash IS NOT NULL"
             ).map_err(|e| format!("Prepare: {}", e))?;
             let friend = stmt.query_row([fid], |row| {
-                Ok(crate::db::user::Friend {
+                Ok(zenth_database_local::db::user::Friend {
                     id: row.get(0)?,
                     pseudo: row.get(1)?,
                     username_hash: row.get(2)?,

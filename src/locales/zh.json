@@ -33,7 +33,9 @@
     "validation": {
       "username_required": "用户名为必填项",
       "password_required": "密码为必填项"
-    }
+    },
+    "sync_prompt": "在另一台设备上有账号？",
+    "sync_link": "同步"
   },
   "keygen": {
     "title": "密钥生成",
@@ -456,5 +458,40 @@
     "back": "返回",
     "yes": "是",
     "no": "否"
+  },
+  "sync": {
+    "title": "同步",
+    "subtitle": "将此设备与现有账户同步。",
+    "role_new": "新设备",
+    "role_new_sub": "我想从可信设备获取同步密钥。",
+    "role_trusted": "可信设备",
+    "role_trusted_sub": "我已登录，想认证新设备。",
+    "back": "返回",
+    "back_to_login": "返回登录",
+    "generate_btn": "生成配对密钥",
+    "generating": "生成中…",
+    "done": "完成",
+    "retry": "重新开始",
+    "need_login": "您需要登录才能使用此功能。",
+    "keygen_title": "正在生成配对密钥",
+    "keygen_hint_mouse": "移动鼠标以生成熵",
+    "keygen_hint_touch": "握住设备 — 传感器正在收集熵",
+    "keygen_preview_label": "密钥生成中",
+    "step_role": "角色",
+    "step_password": "确认",
+    "step_keygen": "密钥生成",
+    "step_qr": "二维码",
+    "step_scan": "扫描",
+    "step_verify": "验证",
+    "step_done": "完成",
+    "need_account_hint": "要关联此设备，请先创建账号或登录。",
+    "create_account_btn": "创建账号",
+    "login_btn": "登录",
+    "show_qr_hint": "将此代码展示给您的受信设备。",
+    "success_title": "设备同步成功！",
+    "success_detail": "您的账户已同步到此设备。",
+    "goto_chat": "继续",
+    "error_network": "服务器无法访问。请检查连接并重试。",
+    "keygen_server_wait": "正在设置配对密钥…"
   }
 }
